@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://www.ibatis.com/dtd/sql-map-2.dtd">
+
+<sqlMap namespace="Dggame">
+
+	<typeAlias alias="egovMap"
+		type="egovframework.rte.psl.dataaccess.util.EgovMap" />
+	<typeAlias alias="emp"
+		type="egovframework.example.sample.service.EmpVO" />
+	<typeAlias alias="mc"
+		type="egovframework.example.sample.service.MCVO" />
+
+	<resultMap id="empVO"
+		class="egovframework.example.sample.service.EmpVO">
+		<result property="empName" column="EMPNAME" />
+		<result property="empAnswer" column="EMPANSWER" />
+		<result property="empPass" column="EMPPASS" />
+		<result property="empAnswerTime" column="EMPANSWERTIME" />
+	</resultMap>
+
+	<resultMap id="mcVO"
+		class="egovframework.example.sample.service.MCVO">
+		<result property="mcName" column="MCNAME" />
+		<result property="mcAnswer" column="MCANSWER" />
+		<result property="mcQStart" column="MCQSTART" />
+	</resultMap>
+	
+	<!-- DGEMP 테이블 사원명, 정답여부 인서트 -->
+	<insert id="dgDAO.insertEmp" parameterClass="emp">
+		<![CDATA[
+			INSERT INTO DGEMP 
+				( EMPNAME
+				,EMPPASS 
+				 )
+			VALUES ( #empName#
+				  , 'Y'
+				 )
+		]]>
+	</insert>
+
+	<!-- DGEMP 테이블 정답 업데이트 -->
+	<update id="dgDAO.updateEmpAnswer" parameterClass="emp">
+		<![CDATA[
+			UPDATE DGEMP
+			SET EMPANSWER=#empAnswer#
+				, EMPANSWERTIME=#empAnswerTime#
+			WHERE EMPPASS = 'Y'
+			AND EMPNAME=#empName#
+		]]>
+	</update>
+
+	<!-- DGMC 테이블 문제시작여부 업데이트 -->
+	<update id="dgDAO.updateMcQStart" parameterClass="mc">
+		<![CDATA[
+			UPDATE DGMC
+			SET MCQSTART=#mcQStart#
+			WHERE 1=1
+		]]>
+	</update>
+
+	<!-- [채점하기]버튼 클릭시, DGMC 테이블 정답 업데이트 -->
+	<update id="dgDAO.updateMcAnswer">
+		<![CDATA[
+			UPDATE DGMC
+			SET MCANSWER=#mcAnswer#
+			WHERE 1=1
+		]]>
+	</update>
+
+	<!-- [채점하기]버튼 클릭시, DGEMP 테이블 통과여부 업데이트 -->
+	<update id="dgDAO.updateEmpPass">
+		<![CDATA[
+			UPDATE DGEMP
+			SET EMPPASS='N'
+				,EMPANSWER=''
+			WHERE 1=1
+			AND EMPNAME = #empName#
+			AND EMPPASS = 'Y'
+		]]>
+	</update>
+	
+	<!-- [다음] 버튼 클릭시, 통과한 사람들 정답 초기화 -->
+	<update id="dgDAO.updateResetEmpAnswer">
+		UPDATE DGEMP
+		SET EMPANSWER = ''
+		WHERE EMPPASS = 'Y'
+	</update>
+
+	<!-- [재시작] 버튼 클릭 시EGEMP 모든 사원 재시작 업데이트 -->
+	<update id="dgDAO.updateResetEmp">
+		<![CDATA[
+			UPDATE DGEMP
+			SET EMPPASS='Y'
+				, EMPANSWER = ''
+				, EMPANSWERTIME = ''
+			WHERE 1=1
+		]]>
+	</update>
+	
+	<!-- [마감하기] 버튼 클릭시 정답 제출한 사원들 수 셀렉트 -->
+	<select id="dgDAO.selectEmpAnswerCount" remapResults="true"
+		resultClass="int">
+		SELECT COUNT(EMPNAME)
+		FROM DGEMP
+		WHERE EMPPASS = 'Y'
+		AND EMPANSWER IS NOT NULL
+	</select>
+
+	<!-- DGEMP 테이블 셀렉트 -->
+	<select id="dgDAO.selectEmpAnswerList" remapResults="true"
+		resultClass="egovframework.example.sample.service.EmpVO">
+		<![CDATA[
+            SELECT 
+			EMPNAME, EMPANSWER
+			FROM DGEMP
+			WHERE 1=1
+			AND EMPPASS = 'Y'
+			ORDER BY EMPNAME
+		]]>
+	</select>
+
+	<!-- [다음]버튼 클릭시? DGMC 문제 시작 여부 셀렉트 -->
+	<select id="dgDAO.selectMcQStart" remapResults="true"
+		resultClass="egovframework.example.sample.service.MCVO">
+		<![CDATA[
+			SELECT 
+				MCNAME, MCQSTART
+			FROM DGMC
+		]]>
+	</select>
+	
+	<!-- EGEMP 이미 있는 사원인지 여부 셀렉트 -->
+	<select id="dgDAO.selectEmp" remapResults="true"
+		resultClass="int">
+			SELECT COUNT(EMPNAME)
+			FROM DGEMP
+			WHERE EMPNAME = #empName#
+	</select>
+	
+	<!-- 
+	[추가]버튼 으로 Emp 업데이트 
+	<update id="dgDAO.updateAddEmpPass">
+		<![CDATA[
+			UPDATE DGEMP
+			SET EMPPASS='Y'
+				,EMPANSWERTIME=#empAnswerTime#
+				,EMPANSWER=#empAnswer#
+			WHERE 1=1
+			AND EMPPASS='N'
+			AND EMPNAME=#empName#
+		]]>
+	</update>
+	 -->
+</sqlMap>
